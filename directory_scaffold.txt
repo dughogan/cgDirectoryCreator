@@ -1,0 +1,72 @@
+JOB#_ProjectName
+|--work
+|  |--assets
+|  |  |--2d
+|  |  |  |--art
+|  |  |  |--textures
+|  |  |  |--photoshop
+|  |  |--3d
+|  |  |  |--3ds
+|  |  |  |--abc
+|  |  |  |--blender
+|  |  |  |--c4d
+|  |  |  |--katana
+|  |  |  |--obj
+|  |  |  |--maya
+|  |  |  |--substance
+|  |  |  |--zbrush
+|  |  |--audio
+|  |  |  |--music
+|  |  |  |--sfx
+|  |  |  |--vo
+|  |  |--footage
+|  |  |  |--plates
+|  |  |  |--stock_footage
+|  |--common
+|  |  |--docs
+|  |  |--light
+|  |  |--model
+|  |  |--nuke
+|  |  |--references
+|  |  |--surface
+|  |--production
+|  |  |--docs
+|  |  |--contact_sheets
+|  |  |--rv
+|  |--sequences
+|  |  |--editorial
+|  |  |  |--premiere
+|  |  |--seq_0001
+|  |  |  |--sh_0001
+|  |  |  |  |--editorial
+|  |  |  |  |  |--premiere
+|  |  |  |  |--2d
+|  |  |  |  |  |--ae
+|  |  |  |  |  |--photoshop
+|  |  |  |  |  |--nuke
+|  |  |  |  |--3d
+|  |  |  |  |  |--3ds
+|  |  |  |  |  |--blender
+|  |  |  |  |  |--c4d
+|  |  |  |  |  |--katana
+|  |  |  |  |  |--maya
+|  |  |  |  |  |--zbrush
+|--renders
+|  |--sequences
+|  |  |--editorial
+|  |  |--seq_0001
+|  |  |  |--editorial
+|  |  |  |--sh_0001
+|  |  |  |  |--2d
+|  |  |  |  |  |--ae
+|  |  |  |  |  |--nuke
+|  |  |  |  |  |--plates
+|  |  |  |  |  |--precomp
+|  |  |  |  |--3d
+|  |  |  |  |  |--3ds
+|  |  |  |  |  |--arnold
+|  |  |  |  |  |--blender
+|  |  |  |  |  |--c4d
+|  |  |  |  |  |--katana
+|  |  |  |  |  |--maya
+|  |  |  |  |  |--zbrush
