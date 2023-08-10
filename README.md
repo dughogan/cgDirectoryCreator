@@ -18,6 +18,7 @@ Simple, intuitive, and ready to use out of the box.
 --------------------------------
 
 Why Use CG Directory Creator?
+
 In the VFX industry, having a consistent and organized directory structure is essential. Not only does it ensure smooth workflows within teams, but it also reduces the chances of lost data or miscommunication about file locations. By using the CG Directory Creator, you're setting your projects up with a tried and tested directory system.
 
 How to Use
