@@ -3,9 +3,19 @@ from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QLineEdit, QPus
                              QMenuBar, QMenu, QDialog, QFileDialog, QTextEdit)
 from PyQt5.QtCore import Qt
 import os
+import sys
+
+EMBEDDED_SCAFFOLD = ""
 
 PREFERENCES_FILE = "preferences.txt"
 
+
+def fetch_directory_scaffold():
+    scaffold_file_path = "directory_scaffold.txt"
+    if os.path.exists(scaffold_file_path):
+        with open(scaffold_file_path, "r") as f:
+            return f.read()
+    return EMBEDDED_SCAFFOLD
 
 def parse_directory_structure(file_content):
     """Parse directory scaffold from the .txt content into a nested dictionary."""
@@ -89,7 +99,7 @@ class SettingsDialog(QDialog):
 class VFXProjectSetup(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("CG Directory Creator")  # Setting the window title
+        self.setWindowTitle("Cheil Job Creator v2.0")  # Setting the window title
         self.shot_spinboxes = []
         self.prev_shot_values = []  # List to store shot spin boxes
         self.initUI()
@@ -305,81 +315,56 @@ class VFXProjectSetup(QWidget):
                 spinbox.setValue(self.original_seq_shot_values[i])
 
     def update_project(self):
-        changes_made = False
+        import sys
+        import os
 
-        # Reading and parsing the directory structure from directory_scaffold.txt
-        with open("directory_scaffold.txt", "r") as file:
+        # Check if the application is running as a standalone .exe
+        if getattr(sys, 'frozen', False):
+            application_path = sys._MEIPASS
+        else:
+            application_path = os.path.dirname(os.path.abspath(__file__))
+
+        scaffold_path = os.path.join(application_path, 'directory_scaffold.txt')
+        with open(scaffold_path, 'r') as file:
             directory_scaffold = file.read()
-        parsed_structure = parse_directory_structure(directory_scaffold)
 
-        # Replacing placeholders and constructing the directories
+        parsed_structure = parse_directory_structure(directory_scaffold)
         project_name = f"{self.project_num_input.text()}_{self.project_name_input.text()}"
         parsed_structure = parsed_structure["JOB#_ProjectName"]
         parsed_structure.pop("JOB#_ProjectName", None)
+
+        # Extract shot structure from parsed_structure
+        shot_structure = parsed_structure["work"]["sequences"]["seq_0001"]["sh_0001"]
+
+        # Determine the project folder path
+        with open(PREFERENCES_FILE, 'r') as file:
+            root_dir = file.readline().strip()
+        project_folder_path = os.path.join(root_dir, project_name)
+
+        # Identify existing sequences and shots
+        existing_sequences = [dir_name for dir_name in
+                              os.listdir(os.path.join(project_folder_path, "work", "sequences")) if "seq_" in dir_name]
+        existing_shots = {
+            seq: [shot_name for shot_name in os.listdir(os.path.join(project_folder_path, "work", "sequences", seq)) if
+                  "sh_" in shot_name] for seq in existing_sequences}
 
         # Identify new sequences and shots based on stored values
         new_sequences = []
         new_shots = []
         current_num_seqs = self.num_seq_input.value()
 
-        # Check for sequence reduction
-        if self.num_seq_input.value() < self.original_num_seqs:
-            QMessageBox.warning(self, "Warning", "Sequence deletion or shot removal is not allowed. Reverting back all changes including notes.")
-            self.reset_to_original_values()
-            return
-
-        # Check for shot reduction within sequences
-        for i in range(self.original_num_seqs):
-            if self.shot_spinboxes[i].value() < self.original_seq_shot_values[i]:
-                QMessageBox.warning(self, "Warning", "Sequence deletion or shot removal is not allowed. Reverting back all changes including notes.")
-                self.reset_to_original_values()
-                return
-
-        # Identifying new sequences
-        for i in range(self.original_num_seqs, current_num_seqs):
-            new_sequences.append(f"seq_{i + 1:04d}")
-
-        # Identifying new shots within existing sequences
-        for i in range(self.original_num_seqs):
+        # Identify new sequences based on user input
+        for i in range(current_num_seqs):
             seq_name = f"seq_{i + 1:04d}"
-            for j in range(self.original_seq_shot_values[i], self.shot_spinboxes[i].value()):
-                new_shots.append(f"{seq_name}/sh_{j + 1:04d}")
-
-        # Prepare the confirmation message
-        changes_msg = "The following changes will be made:\n\n"
-
-        if new_sequences:
-            changes_msg += "New Sequences:\n" + "\n".join(new_sequences) + "\n\n"
-        if new_shots:
-            changes_msg += "New Shots:\n" + "\n".join(new_shots) + "\n\n"
-        if self.project_notes_input.toPlainText() != self.original_project_notes:
-            changes_made = True
-            changes_msg += "Project notes will be updated.\n\n"
-
-        # If there are changes, show the confirmation message
-        if changes_made:
-            changes_msg += "Do you want to continue?"
-            reply = QMessageBox.question(self, 'Review Changes', changes_msg, QMessageBox.Yes, QMessageBox.No)
-            if reply == QMessageBox.No:
-                # Reset to original values
-                self.reset_to_original_values()
-                return
-        else:
-            QMessageBox.information(self, "Info", "No changes have been made.")
-            return
-
-        # Define project_folder_path before using it for directory creation
-        with open(PREFERENCES_FILE, 'r') as file:
-            root_dir = file.readline().strip()
-        project_folder_path = os.path.join(root_dir, project_name)
-
-        # Update the project_notes.txt
-        if self.project_notes_input.toPlainText() != self.original_project_notes:
-            # Define the correct path to project_notes.txt
-            notes_filepath = os.path.join(project_folder_path, "work", "production", "docs", "project_notes.txt")
-            with open(notes_filepath, 'w') as notes_file:
-                notes_file.write(self.project_notes_input.toPlainText())
-            self.original_project_notes = self.project_notes_input.toPlainText()
+            if seq_name not in existing_sequences:
+                new_sequences.append(seq_name)
+            else:
+                # If the sequence exists, compare shots
+                num_shots_for_sequence = self.shot_spinboxes[i].value()
+                for j in range(num_shots_for_sequence):
+                    shot_name = f"sh_{j + 1:04d}"
+                    if shot_name not in existing_shots[seq_name]:
+                        new_shots.append(f"{seq_name}/{shot_name}")
 
         # Create the directories for new sequences and shots
         base_paths = [os.path.join(project_folder_path, dir_name) for dir_name in ["renders", "work"]]
@@ -393,26 +378,17 @@ class VFXProjectSetup(QWidget):
                 for shot_num in range(1, self.shot_spinboxes[int(seq.split('_')[-1]) - 1].value() + 1):
                     shot_name = f"sh_{shot_num:04d}"
                     shot_path = os.path.join(seq_path, shot_name)
-                    os.makedirs(shot_path, exist_ok=True)
-
-            # Create new shots within existing sequences
-            for shot in new_shots:
-                seq_name, shot_name = shot.split("/")
-                shot_path = os.path.join(base_path, "sequences", seq_name, shot_name)
-                os.makedirs(shot_path, exist_ok=True)
+                    create_directories(shot_path, shot_structure)
 
         try:
             create_directories(project_folder_path, parsed_structure)
             QMessageBox.information(self, "Success", "Updates made successfully!")
-
-            # After directories are successfully created:
             self.original_num_seqs = self.num_seq_input.value()
             self.original_seq_shot_values = [spinbox.value() for spinbox in self.shot_spinboxes]
-
         except Exception as e:
             print(f"Error creating directories: {e}")
             QMessageBox.warning(self, "Warning",
-                                "There was an error creating the directories. Please check the application logs for details.")
+                                "Error creating directories. Please check the application logs for details.")
 
 
 if __name__ == '__main__':
